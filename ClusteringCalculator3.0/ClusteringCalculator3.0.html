@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clustering Calculator</title>
+    <script src="./vue.js"></script>
+    <link rel="stylesheet" type="text/css" href="ClusteringCalculator3.0.css" media="screen">
+</head>
+<body>
+    
+    <div id="app">
+        <div class="mainBox">
+            <h1>Choose the Sequencer:</h1>
+                <div class="box" id="buttons">
+                    <button class="button" v-for="(value, sequencer) in sequencers" :key="sequencer" @click="changeToCurrent(sequencer)"><strong>{{ sequencer }}</strong></button>
+                </div>
+                <div class="box" v-if="currentSequencer != null">
+                    <h2><strong>{{ currentSequencer }} Clustering:</strong></h2>
+                    <div class="formBox">
+                        <template v-if="currentSequencer == 'NovaSeq'">
+                            <label for="Flowcell">Choose the Flowcell type:</label>
+                            <label for="Flowcell"><input type="radio" value="100" v-model="currentLaneVolume">SP/S1</label>
+                            <label for="Flowcell"><input type="radio" value="150" v-model="currentLaneVolume">S2</label>
+                            <label for="Flowcell"><input type="radio" value="310" v-model="currentLaneVolume">S4</label><br>
+                            <hr>
+                        </template>
+                        <template v-if="currentSequencer == 'NovaSeq Xp'">
+                            <label for="Flowcell">Choose the Flowcell type:</label>
+                            <label for="Flowcell"><input type="radio" value="18" v-model="currentLaneVolume">SP/S1</label>
+                            <label for="Flowcell"><input type="radio" value="22" v-model="currentLaneVolume">S2</label>
+                            <label for="Flowcell"><input type="radio" value="30" v-model="currentLaneVolume">S4</label><br>
+                            <hr>
+                        </template>
+                        <template v-if="currentSequencer == 'iSeq' || currentSequencer == 'NovaSeq' || currentSequencer == 'NovaSeq Xp'">
+                            <label for="laneMolarity">Concentration of the multiplex:</label>
+                            <input type="number" v-model="currentMpConcentration">nM</br>
+                            <hr>
+                        <label for="phiXPercentage">Loading Volume:</label>
+                            <input type="number" v-model="currentLaneVolume">µl</br>
+                            <hr>
+                        </template>
+                        <label for="laneMolarity">Enter lane molarity:</label>
+                            <input type="number" v-model="currentLaneMolarity">pM</br>
+                            <hr>
+                        <label for="phiXPercentage">Enter PhiX percentage of the lane:</label>
+                            <input type="number" v-model="currentPhiXPercentage">%</br>
+                            <hr>
+                        <template v-if="currentSequencer == 'iSeq' || currentSequencer == 'NovaSeq' || currentSequencer == 'NovaSeq Xp'">
+                            <label for="phiXPercentage">Enter PhiX Stock molarity (<strong>non-denatured</strong>):</label>
+                            <label for="phiXPercentage"><input type="radio" value="1" v-model="currentPhiXStockConcentration">1nM</label>
+                            <label for="phiXPercentage"><input type="radio" value="0.1" v-model="currentPhiXStockConcentration">0.1nM</label><hr>
+                        </template>
+                        <template v-else>
+                            <label for="phiXPercentage">Enter PhiX Stock molarity:</label>
+                            <label for="phiXPercentage"><input type="radio" value="200" v-model="currentPhiXStockConcentration">200nM</label>
+                            <label for="phiXPercentage"><input type="radio" value="20" v-model="currentPhiXStockConcentration">20nM</label><hr>
+                        </template>
+                            <div class="generalparameters">
+                                    Total Lane Molarity: {{ currentLaneMolarity }}pM</br>
+                                    Library Molarity: {{ calculateLibraryMolarity }}pM</br>
+                                    PhiX Molarity: {{ calculatePhiXMolarity }}pM</br>
+                            </div>
+                            <div style="display: none;">
+                                <strong>PhiX Volume: {{ calculatePhiXVolume }}µl</strong><br>
+                                <strong>Sample Volume: {{ calculateLibraryVolume }}µl</strong><br>
+                                <strong>Buffer Volume: {{ calculateBufferVolume }}µl</strong><br>  
+                            </div>
+                            <button id="instButton" class="button" @click="() => {instruction = true; getInstruction();}"><strong>Instruction</strong></button>
+                        </div>
+                    <template v-if="instruction == true">
+                        <p>Instruction:</p>
+                        <pre class="instruction">{{ instructions[currentInstruction] }}</pre>
+                        <ol class="instruction">Table 1
+                            <li v-for="(value, key) in sequencers[currentSequencer].table">{{ key }} {{ value }}</li>
+                        </ol>
+                        <ol class="instruction" v-if="currentSequencer == 'NovaSeq Xp'">Table 2
+                            <li v-for="(value, key) in sequencers[currentSequencer].amp">{{ key }} {{ value }}</li>
+                        </ol>
+                    </template>
+                </div>
+            <footer>
+                <center>
+                    <p><strong>Vovtek GmbH</strong></br><i>All Rights Reserved</i></p>
+                </center>
+            </footer>                            
+        </div>   
+    </div>
+</body>
+<script>
+    
+    new Vue ({
+    el: '#app',
+    data: {
+        sequencers: {
+            iSeq: {
+                multiplexConcentration: 2.5,
+                laneMolarity: 50,
+                laneVolume: 20,
+                phiXPercentage: 1,
+                phiXStockConcentration: 0.1,
+                table: {
+                    'Sample:': '',
+                    'PhiX Volume:': '',
+                    'Buffer Volume:': ''
+                }
+            },
+            MiSeq: {
+                multiplexConcentration: 2.5,
+                laneMolarity: 18,
+                laneVolume: 0.6,
+                phiXPercentage: 5,
+                phiXStockConcentration: 200,
+                table: {
+                    'Denaturation:': '',
+                    'Library volume:': '19µl',
+                    'NaOH volume:': '1µl',
+                    'Incubate for:': '5min',
+                    'After incubation transfer to': '',
+                    'HybBuffer volume:': '980µl',
+                    'Mix together': '',
+                    'Denatured Sample:': ''
+                }
+            },
+            NextSeq: {
+                multiplexConcentration: 2.5,
+                laneMolarity: 2.3,
+                laneVolume: 1.3,
+                phiXPercentage: 5,
+                phiXStockConcentration: 20,
+                table: {
+                    'Denaturation:': '',
+                    'Library volume:': '19µl',
+                    'NaOH volume:': '1µl',
+                    'Incubate for:': '5min',
+                    'After incubation neutralize by': '',
+                    ' 1M Tris pH 8:': '20µl',  
+                    'Transfer 40µl into:': '',                  
+                    'HybBuffer volume:': '960µl',
+                    'Mix together': '',
+                    'Denatured Sample:': ''
+                }
+            },
+            HiSeq: {
+                multiplexConcentration: 2.5,
+                laneMolarity: 18,
+                laneVolume: 0.12,
+                phiXPercentage: 1,
+                phiXStockConcentration: 20,
+                table: {
+                    'Denaturation:': '',
+                    'Library volume:': '19µl',
+                    'NaOH volume:': '1µl',
+                    'Incubate for:': '5min',
+                    'After incubation transfer to': '',
+                    'HybBuffer volume:': '980µl',
+                    'Mix together': '',
+                    'Denatured Sample:': ''
+                }
+            },
+            NovaSeq: {
+                multiplexConcentration: 2.5,
+                laneMolarity: 100,
+                laneVolume: 100,
+                phiXPercentage: 1,
+                phiXStockConcentration: 1,
+                table: {
+                    'Sample:': '',
+                    'PhiX Volume:': '',
+                    'Buffer Volume:': '',
+                    'Add 0.2N NaOH:': '',
+                    'Incubate for:': '8min',
+                    'After incubation neutralize by': '',
+                    '400mM Tris pH 8:': '',
+                    'Transfer to the NovaSeq tube': ''
+                }
+            },
+            'NovaSeq Xp': {
+                multiplexConcentration: 2.5,
+                laneMolarity: 100,
+                laneVolume: 18,
+                phiXPercentage: 1,
+                phiXStockConcentration: 0.1,
+                table: {
+                    'Sample:': '',
+                    'PhiX Volume:': '',
+                    'Buffer Volume:': '',
+                    'Add 0.2N NaOH:': '',
+                    'Incubate for:': '8min',
+                    'After incubation neutralize by': '',
+                    '400mM Tris pH 8:': '',
+                    'Put samples on ice and prepare AMP mix': '',
+                    'Add AMP Mix to each sample tube': ''
+                },
+                amp: {
+                    'Mix:': '',
+                    'DPX1:': null,
+                    'DPX2:': null,
+                    'DPX3:': null,
+                    'Volume of mix per sample:': '',
+                    'ExAmp:': null,
+                    'Volume of sample/mix per flowcell:': '',
+                    'Final mix:': null
+                }
+            }
+        },
+        instructions: {
+            iSeqInstruction: `
+        
+1. Check, if instrument is idle. If run just finished - remove used cartridge (follow instructions on the screen).
+2. Prepare Cluster Sheet and prepare all reagents.
+3. Take out the flowcell from the fridge to equilibrate it to room temperature (5-10min).
+4. Install Flowcell in the cartridge.
+5. Add all reagents volumes given by Table 1, vortex and spin down.
+6. Transfer 20µl into iSeq cartridge in well marked 'sample'.
+7. Load reagents into instrument, following instructions on the iSeq's screen.`,
+            
+            MiSeqInstruction: `
+        
+1. Check, if instrument is idle. If run just finished - remove used cartridge and start washing.
+2. After washing power-cycle the instrument (washing takes around 20min).
+3. Prepare Cluster Sheet, Sample Sheet (on instrument) and all reagents.
+4. Denature sample according to Table 1.
+5. Load the final mix in well labeled sample.
+6. Follow the screen instructions and load all consumables in instrument.
+7. After finished run wash and powercycle the instrument.`,
+            
+            NextSeqInstruction: `
+        
+1. Check, if instrument is idle. 
+2. Prepare Cluster Sheet and all reagents.
+3. Take out the flowcell from the fridge to equilibrate it to room temperature (5-10min).
+4. Denature sample according to Table 1.
+5. Load the final mix in well labeled sample.
+6. Follow the screen instructions and load all consumables in instrument.`,
+
+            HiSeqInstruction: `
+        
+1. Check, if instrument is idle. If run just finieshed power-cycle the instrument,
+   perform maintanance wash using MWS. Delete old files from HiSeq Temp folder on drives C and D. 
+   Leave just 3 latest runs. Afterwards perform water wash.
+   Wash cBot as well. (Follow instructions on the screen)
+2. Prepare Cluster Sheet and all reagents.
+3. Denature sample according to Table 1.
+4. Load the Flowcell and all consumables in cBot (it takes around 2h).
+5. 10-15 before clustering is finished prime HiSeq with reagents.
+6. Lead clustered Flowcell in the HiSeq.
+7. After finifshed run power-cycle and wash the instrument,
+    delete old files.`,
+            
+            NovaSeqInstruction: `
+            
+1. Check, if instrument is idle. If run just finished - press 'Home' buttons and prepare new run.
+2. Plan ahead every run, reagents can be thawn over night in cold room or in water for 2-4h.
+    After thawing in cold room it is important to check if everything was thawn.
+3. Prepare Cluster Sheet and all reagents.
+4. Take out the flowcell from the fridge to equilibrate it to room temperature (5-10min).
+5. Denature sample according to Table 1.
+6. Load the final mix in the tube and put in the well labeled sample.
+7. Follow the screen instructions and load all consumables in instrument.
+8. If neccessary delete old files using software manager.
+9. To perform maintanance wash use wash cartridges and wash Flowcell.
+    Follow instructions on the screen to start wash.`,
+
+    'NovaSeq XpInstruction': `
+    
+1. Check, if instrument is idle. If run just finished - press 'Home' buttons and prepare new run.
+2. Plan ahead every run, reagents can be thawn over night in cold room or in water for 2-4h
+    (except Xp module! - this just thaw during denaturation in room temperature).
+    After thawing in cold room it is important to check if everything was thawn.
+3. Prepare Cluster Sheet and all reagents.
+4. Take out the flowcell from the fridge to equilibrate it to room temperature (5-10min).
+5. Denature sample according to Table 1 and put samples on ice.
+6. Prepare Amp mix according to Table 2.
+7. Install the flowcell and the gasket in the holder.
+8. Load the final mix in appropriate wells and wait 2min.
+9. Follow the screen instructions and load all consumables in instrument.
+10. Remember to choose Xp workflow in run settings!
+11. If neccessary delete old files using software manager.
+12. To perform maintanance wash use wash cartridges and wash Flowcell.
+    Follow instructions on the screen to start wash.`,
+        },
+        currentSequencer: null,
+        curentMultiplexConcentraton: null,
+        currentLaneMolarity: null,
+        currentLaneVolume: null,
+        currentPhiXPercentage: null,
+        currentPhiXStockConcentration: null,
+        phiXMolarity: null,
+        libraryMolarity: null,
+        libraryVolume: null,
+        phiXVolume: null,
+        bufferVolume: null,
+        currentMpConcentration: null,
+        instruction: false,
+        currentInstruction: null,
+    },
+    methods: {
+        changeToCurrent(sequencer) {
+            this.currentSequencer = sequencer;
+            this.curentMultiplexConcentraton= this.sequencers[sequencer].multiplexConcentration;
+            this.currentLaneMolarity = this.sequencers[sequencer].laneMolarity;
+            this.currentLaneVolume = this.sequencers[sequencer].laneVolume;
+            this.currentPhiXPercentage = this.sequencers[sequencer].phiXPercentage;
+            this.currentPhiXStockConcentration = this.sequencers[sequencer].phiXStockConcentration;
+            this.currentMpConcentration = this.sequencers[sequencer].multiplexConcentration;
+            this.instruction = 'false'            
+        },
+        getInstruction() {
+            return this.currentInstruction = this.currentSequencer + 'Instruction';
+        }
+    },
+    computed: {       
+        calculatePhiXMolarity() {            
+            return this.phiXMolarity = (this.currentLaneMolarity / 100 * this.currentPhiXPercentage).toFixed(2);
+        },
+        calculateLibraryMolarity() {            
+            return this.libraryMolarity = (this.currentLaneMolarity - this.phiXMolarity).toFixed(2);
+        },
+        calculateLibraryVolume() {    
+            if (this.currentSequencer == 'iSeq') {
+                return this.libraryVolume = (this.currentLaneVolume / ((this.currentMpConcentration / this.currentLaneMolarity) * 1000)).toFixed(2);
+            } else if (this.currentSequencer == 'NovaSeq' || this.currentSequencer == 'NovaSeq Xp') {
+                return this.libraryVolume = (this.currentLaneVolume / (this.currentMpConcentration / (this.currentLaneMolarity * 5 / 1000))).toFixed(2);
+            } else {
+                return  this.libraryVolume = ((1000 / 50 * this.libraryMolarity) * this.currentLaneVolume).toFixed(2);
+            }            
+        },
+        calculatePhiXVolume() {
+            if (this.currentSequencer == 'iSeq' || this.currentSequencer == 'NovaSeq' || this.currentSequencer == 'NovaSeq Xp') {
+                return this.phiXVolume = (this.currentLaneVolume / (this.currentPhiXStockConcentration / (this.currentPhiXPercentage * 5 / 1000) / (this.currentLaneMolarity / 100))).toFixed(2);
+            } else {
+                return this.phiXVolume = ((1000 / this.currentPhiXStockConcentration * this.phiXMolarity) * this.currentLaneVolume).toFixed(2);
+            }
+        },
+        calculateBufferVolume() {
+            if (this.currentSequencer == 'iSeq' || this.currentSequencer == 'NovaSeq' || this.currentSequencer == 'NovaSeq Xp') {
+                return this.bufferVolume = (this.currentLaneVolume - this.phiXVolume - this.libraryVolume).toFixed(2);
+            } else {
+                return this.bufferVolume = ((1000 * this.currentLaneVolume) - this.phiXVolume - this.libraryVolume).toFixed(2);
+            }
+        }
+    },
+    watch: {
+        libraryVolume() {
+            if (this.currentSequencer == 'iSeq' || this.currentSequencer == 'NovaSeq' || this.currentSequencer == 'NovaSeq Xp') {
+                return this.sequencers[this.currentSequencer].table['Sample:'] = this.libraryVolume + 'µl';
+            } else {
+                return this.sequencers[this.currentSequencer].table['Denatured Sample:'] = this.libraryVolume + 'µl';
+            };            
+        },
+        phiXVolume() {
+            return this.sequencers[this.currentSequencer].table['PhiX Volume:'] = this.phiXVolume + 'µl';
+        },
+        bufferVolume() {
+            return this.sequencers[this.currentSequencer].table['Buffer Volume:'] = this.bufferVolume + 'µl';
+        },
+        currentLaneVolume() {
+            if (this.currentSequencer == 'NovaSeq') {
+                this.sequencers.NovaSeq.table['400mM Tris pH 8:'] = this.currentLaneVolume / 4 + 'µl';
+                this.sequencers.NovaSeq.table['Add 0.2N NaOH:'] = this.currentLaneVolume / 4 + 'µl';
+            } else if (this.currentSequencer == 'NovaSeq Xp') {
+                this.sequencers['NovaSeq Xp'].table['400mM Tris pH 8:'] = (this.currentLaneVolume / 4 + 0.5)+ 'µl';
+                this.sequencers['NovaSeq Xp'].table['Add 0.2N NaOH:'] = (this.currentLaneVolume / 4 - 0.5) + 'µl';
+                    if (this.currentLaneVolume == 18) {
+                        this.sequencers[this.currentSequencer].amp['DPX1:'] = 84 + 'µl';
+                        this.sequencers[this.currentSequencer].amp['DPX2:'] = 12 + 'µl';
+                        this.sequencers[this.currentSequencer].amp['DPX3:'] = 44 + 'µl';
+                        this.sequencers[this.currentSequencer].amp['ExAmp:'] = 63 + 'µl';
+                        this.sequencers[this.currentSequencer].amp['Final mix:'] = 80 + 'µl';
+                    } else if  (this.currentLaneVolume == 22) {
+                        this.sequencers[this.currentSequencer].amp['DPX1:'] = 108 + 'µl';
+                        this.sequencers[this.currentSequencer].amp['DPX2:'] = 15,5 + 'µl';
+                        this.sequencers[this.currentSequencer].amp['DPX3:'] = 56,6 + 'µl';
+                        this.sequencers[this.currentSequencer].amp['ExAmp:'] = 77 + 'µl';
+                        this.sequencers[this.currentSequencer].amp['Final mix:'] = 95 + 'µl';
+                    } else if  (this.currentLaneVolume == 30) {
+                        this.sequencers[this.currentSequencer].amp['DPX1:'] = 315 + 'µl';
+                        this.sequencers[this.currentSequencer].amp['DPX2:'] = 45 + 'µl';
+                        this.sequencers[this.currentSequencer].amp['DPX3:'] = 165 + 'µl';
+                        this.sequencers[this.currentSequencer].amp['ExAmp:'] = 105 + 'µl';
+                        this.sequencers[this.currentSequencer].amp['Final mix:'] = 130 + 'µl';
+                    }
+            }
+        }
+    }
+})
+</script>
+
+</html>
