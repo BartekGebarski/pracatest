@@ -19,8 +19,8 @@
         <hr> 
         <div class="generalparameters">
             Total Lane Molarity: {{ laneMolarity }}pM<br>
-            Library Molarity: {{ calculateLibraryMolarity() }}pM<br>
-            PhiX Molarity: {{ calculatePhiXMolarity() }}pM<br>
+            Library Molarity: {{ calculateLibraryMolarity }}pM<br>
+            PhiX Molarity: {{ calculatePhiXMolarity }}pM<br>
         </div>
     </div>
     <h3>Instruction:</h3>
@@ -30,9 +30,9 @@
 3. Take out the flowcell from the fridge to equilibrate it to room temperature (5-10min).
 4. Install Flowcell in the cartridge.
 5. Mix all reagents in the Eppendorf tube: 
-    - {{ calculatePhiXVolume() }}µl of {{ phiXStockConcentration }} nM PhiX;
-    - {{ calculateLibraryVolume() }}µl of {{ multiplexConcentration }} nM Library;
-    - {{ calculateBufferVolume() }}µl of Dilution Buffer;
+    - {{ calculatePhiXVolume }}µl of {{ phiXStockConcentration }} nM PhiX;
+    - {{ calculateLibraryVolume }}µl of {{ multiplexConcentration }} nM Library;
+    - {{ calculateBufferVolume }}µl of Dilution Buffer;
 6. Vortex and spin down.
 7. Transfer 20µl into iSeq cartridge in well marked 'sample'.
 8. Load reagents into instrument, following instructions on the iSeq's screen.</pre>
@@ -55,21 +55,21 @@ export default {
             }
         }
     },
-    methods: {
+    computed: {
         calculatePhiXMolarity() {            
             return (this.laneMolarity / 100 * this.phiXPercentage).toFixed(2);
         },
         calculateLibraryMolarity() {            
-            return (this.laneMolarity - this.calculatePhiXMolarity()).toFixed(2);
+            return (this.laneMolarity - this.calculatePhiXMolarity).toFixed(2);
         },
         calculateLibraryVolume() {    
-            return (this.laneVolume / ((this.multiplexConcentration / this.calculateLibraryMolarity()) * 1000)).toFixed(2);                      
+            return (this.laneVolume / ((this.multiplexConcentration / this.calculateLibraryMolarity) * 1000)).toFixed(2);                      
         },
         calculatePhiXVolume() {
             return (this.laneVolume / (this.phiXStockConcentration / (this.phiXPercentage * 5 / 1000) / (this.laneMolarity / 100))).toFixed(2);           
         },
         calculateBufferVolume() {
-            return (this.laneVolume - this.calculatePhiXVolume() - this.calculateLibraryVolume()).toFixed(2);
+            return (this.laneVolume - this.calculatePhiXVolume - this.calculateLibraryVolume).toFixed(2);
         }
     }
 }

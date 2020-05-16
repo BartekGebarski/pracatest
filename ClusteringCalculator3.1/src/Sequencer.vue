@@ -1,17 +1,21 @@
 <template>
     <div>
         <div class="box">
-            <button class="button" v-for="sequencer in sequencers" :key="sequencer" @click="changeToCurrent(sequencer)"><strong>{{ sequencer }}</strong></button>
+            <button
+            v-for="sequencer in sequencers"
+            :key="sequencer"
+            :class="['button', {active: currentSequencer === sequencer}]"
+            @click= "currentSequencer = sequencer">
+            <strong>{{ sequencer }}</strong>
+            </button>
         </div>
         <div class="box" v-if="currentSequencer != null">
-            <h2><strong>{{ currentSequencer }} Clustering:</strong></h2>            
+            <h2><strong>{{ currentSequencer }} Clustering:</strong></h2>   
+            <keep-alive>
+                <component :is="currentSequencerComponent"></component>
+            </keep-alive>         
         </div>
-        <app-iseq  v-if="currentSequencer == 'iSeq'"></app-iseq>
-        <app-miseq  v-else-if="currentSequencer == 'MiSeq'"></app-miseq>
-        <app-nextseq  v-else-if="currentSequencer == 'NextSeq'"></app-nextseq>
-        <app-hiseq  v-else-if="currentSequencer == 'HiSeq'"></app-hiseq>
-        <app-novaseq  v-else-if="currentSequencer == 'NovaSeq'"></app-novaseq>
-        <app-novaseqxp v-else-if="currentSequencer== 'NovaSeq Xp'"></app-novaseqxp>
+        
     </div>
 </template>
 
@@ -28,6 +32,7 @@ export default {
         return {
             sequencers: ['iSeq', 'MiSeq', 'NextSeq', 'HiSeq', 'NovaSeq', 'NovaSeq Xp'],
             currentSequencer: null,
+            currentTab: null,
             currentLaneMolarity: 18,
             currentPhiXPercentage: 1,
             currentPhiXStockConcentration: null,
@@ -41,11 +46,11 @@ export default {
        'app-nextseq': NextSeqVue,
        'app-hiseq': HiSeqVue,
        'app-novaseq': NovaSeqVue,
-       'app-novaseqxp': NovaSeqXpVue
+       'app-novaseq xp': NovaSeqXpVue
     },
-    methods: {
-        changeToCurrent(sequencer) {
-            this.currentSequencer = sequencer;
+    computed: {
+     currentSequencerComponent: function() {
+            return "app-" + this.currentSequencer.toLowerCase();
         }
     }
 }
@@ -77,7 +82,7 @@ export default {
     padding: 10px;
     margin: auto;
     width: 15%;
-    background-color: #f44336;
+    background-color: red;
     color: white;
 }
 
@@ -85,8 +90,8 @@ button:hover {
     background-color: gray;
 }
 
-button:active {
-    background-color: red;
+.button.active {
+    background-color: #f44336;
     transform: translateY(1px);
 }
 .menu {
