@@ -1,5 +1,6 @@
 <template>
 <div class="box">
+    <h1>MiSeq Clustering:</h1>
     <div class="formBox">
         <label for="laneMolarity">Enter lane molarity:</label>
         <input type="number" v-model="laneMolarity">pM<br>

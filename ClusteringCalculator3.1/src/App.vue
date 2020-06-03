@@ -2,6 +2,7 @@
     <div id="app">
         <app-header></app-header>
         <app-sequencer></app-sequencer>
+        <router-view></router-view>
         <app-footer></app-footer>
     </div>
 </template>

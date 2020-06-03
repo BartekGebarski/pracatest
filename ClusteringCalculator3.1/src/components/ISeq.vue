@@ -1,5 +1,6 @@
 <template>
 <div class="box">    
+    <h1>iSeq Clustering:</h1>
     <div class="formBox">
         <label for="laneMolarity">Concentration of the multiplex:</label>
         <input type="number" v-model="multiplexConcentration">nM<br>
@@ -47,12 +48,7 @@ export default {
             laneMolarity: 50,
             laneVolume: 20,
             phiXPercentage: 1,
-            phiXStockConcentration: 0.1,
-            table: {
-                'Sample:': '',
-                'PhiX Volume:': '',
-                'Buffer Volume:': ''
-            }
+            phiXStockConcentration: 0.1
         }
     },
     computed: {
